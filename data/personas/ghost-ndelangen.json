@@ -4,7 +4,7 @@
   "name": "Ghost of ndelangen",
   "emoji": "👻",
   "synthetic": false,
-  "blurb": "Resurrected from 114 review comments across 31 PRs. Last seen 2026-09-25. Watches test coverage first.",
+  "blurb": "Resurrected from 113 review comments across 32 PRs. Last seen 2026-09-25. Watches test coverage first.",
   "tone": "terse and factual",
   "priorities": [
     "test coverage",
@@ -27,7 +27,7 @@
     "a failure path with no handling"
   ],
   "quirks": [
-    "asks a question in 11% of their comments",
+    "asks a question in 9% of their comments",
     "marks nits explicitly in 1% of comments",
     "says something kind in 6% of comments"
   ],
@@ -88,8 +88,8 @@
     "code/core/src/shared/open-service/services/module-graph/",
     "code/lib/vite-plugin-storybook-nextjs/src/"
   ],
-  "commentCount": 114,
-  "firstSeen": "2026-07-29T09:03:32.000Z",
-  "lastSeen": "2026-09-25T07:27:40.000Z",
+  "commentCount": 113,
+  "firstSeen": "2026-07-29T12:07:17.000Z",
+  "lastSeen": "2026-09-25T08:02:29.000Z",
   "source": "heuristic"
 }

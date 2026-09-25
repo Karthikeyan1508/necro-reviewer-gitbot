@@ -4,7 +4,7 @@
   "name": "Ghost of JReinhold",
   "emoji": "🧿",
   "synthetic": false,
-  "blurb": "Resurrected from 187 review comments across 47 PRs. Last seen 2026-09-25. Watches story coverage first.",
+  "blurb": "Resurrected from 184 review comments across 46 PRs. Last seen 2026-09-25. Watches story coverage first.",
   "tone": "writes it out in full",
   "priorities": [
     "story coverage",
@@ -88,8 +88,8 @@
     "code/core/src/cli/tools/",
     "code/core/src/shared/open-service/README.md"
   ],
-  "commentCount": 187,
-  "firstSeen": "2026-07-29T09:08:33.000Z",
+  "commentCount": 184,
+  "firstSeen": "2026-08-03T08:16:30.000Z",
   "lastSeen": "2026-09-25T06:51:07.000Z",
   "source": "heuristic"
 }

@@ -4,7 +4,7 @@
   "name": "Ghost of valentinpalkovic",
   "emoji": "⚰️",
   "synthetic": false,
-  "blurb": "Resurrected from 446 review comments across 103 PRs. Last seen 2026-09-24. Watches story coverage first.",
+  "blurb": "Resurrected from 450 review comments across 105 PRs. Last seen 2026-09-25. Watches story coverage first.",
   "tone": "answers with snippets",
   "priorities": [
     "story coverage",
@@ -88,8 +88,8 @@
     "code/renderers/vue3/src/docgen/",
     "code/frameworks/angular-vite/src/"
   ],
-  "commentCount": 446,
+  "commentCount": 450,
   "firstSeen": "2026-07-30T16:41:20.000Z",
-  "lastSeen": "2026-09-24T15:00:36.000Z",
+  "lastSeen": "2026-09-25T12:40:54.000Z",
   "source": "heuristic"
 }

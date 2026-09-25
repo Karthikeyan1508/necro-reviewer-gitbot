@@ -4,7 +4,7 @@
   "name": "Ghost of kasperpeulen",
   "emoji": "🌫️",
   "synthetic": false,
-  "blurb": "Resurrected from 254 review comments across 35 PRs. Last seen 2026-09-24. Watches test coverage first.",
+  "blurb": "Resurrected from 256 review comments across 35 PRs. Last seen 2026-09-25. Watches test coverage first.",
   "tone": "writes it out in full, answers with snippets",
   "priorities": [
     "test coverage",
@@ -88,8 +88,8 @@
     "code/addons/mcp/src/tools/",
     "code/core/src/telemetry/get-package-manager-info.ts"
   ],
-  "commentCount": 254,
+  "commentCount": 256,
   "firstSeen": "2026-07-29T12:40:35.000Z",
-  "lastSeen": "2026-09-24T18:07:21.000Z",
+  "lastSeen": "2026-09-25T13:57:43.000Z",
   "source": "heuristic"
 }

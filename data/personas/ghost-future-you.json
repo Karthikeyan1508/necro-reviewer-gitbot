@@ -4,7 +4,7 @@
   "name": "Ghost of Future You",
   "emoji": "🔮",
   "synthetic": true,
-  "blurb": "Not a reviewer — the version of you who already fixed this. Speaks from 108 fix and revert commits in storybookjs/storybook.",
+  "blurb": "Not a reviewer — the version of you who already fixed this. Speaks from 149 fix and revert commits in storybookjs/storybook.",
   "tone": "forensic, unsentimental, quotes receipts",
   "priorities": [
     "regressions this repository has already paid for",
@@ -13,11 +13,11 @@
     "cleanup that was never written"
   ],
   "commonPhrases": [
-    "regex   for svelte story",
-    "keep preview navigator helper module-private and test special characters",
-    "Open-service: Fix sync breaks the invariants pass and review reproduced",
-    "Merge pull request #36271 from storybookjs/jeppe/sb-2052-pr-5-bootstrap-and-repair-through-snapshots-sync-request",
-    "unwrap typed meta.component and make the manifest option a fallback"
+    "review findings",
+    "fix!: `setProjectAnnotations()` throws when called after `addon-vitest` applied annotations",
+    "add automigration for vitest setup file",
+    "settle interrupted React DOM renders",
+    "bound react dom shim workspace scan"
   ],
   "flaggedPatterns": [
     "a pattern that has already caused a fix in this repository",
@@ -30,86 +30,86 @@
   "sampleComments": [
     {
       "prNumber": 0,
-      "path": "code/renderers/svelte/src/docgen/docgen-worker.test.ts",
-      "body": "2caeda4 — fix: regex   for svelte story",
-      "createdAt": "2026-09-24T12:22:13Z"
+      "path": "code/lib/cli-storybook/src/automigrate/fixes/vitest-setup-file.ts",
+      "body": "ae199f3 — fix: review findings",
+      "createdAt": "2026-09-25T12:42:42Z"
     },
     {
       "prNumber": 0,
-      "path": "code/core/src/preview/preview-navigator.stories.tsx",
-      "body": "fc9d47c — fix(core): keep preview navigator helper module-private and test special characters",
-      "createdAt": "2026-09-24T11:52:55Z"
+      "path": "MIGRATION.md",
+      "body": "10a4739 — fix!: `setProjectAnnotations()` throws when called after `addon-vitest` applied annotations",
+      "createdAt": "2026-09-25T11:23:35Z"
     },
     {
       "prNumber": 0,
-      "path": "code/core/src/shared/open-service/patch-recorder.test.ts",
-      "body": "f1b0dc2 — Open-service: Fix sync breaks the invariants pass and review reproduced",
-      "createdAt": "2026-09-23T13:44:24Z"
+      "path": "code/lib/cli-storybook/src/automigrate/fixes/addon-a11y-addon-test.test.ts",
+      "body": "a4034f8 — fix: add automigration for vitest setup file",
+      "createdAt": "2026-09-25T11:19:07Z"
     },
     {
       "prNumber": 0,
-      "path": "code/core/src/channels/postmessage/index.ts",
-      "body": "73b063d — Merge pull request #36271 from storybookjs/jeppe/sb-2052-pr-5-bootstrap-and-repair-through-snapshots-sync-request",
-      "createdAt": "2026-09-23T12:21:12Z"
+      "path": "code/core/src/shared/react-dom-client.tsx",
+      "body": "3bcbc80 — fix: settle interrupted React DOM renders",
+      "createdAt": "2026-09-25T08:39:57Z"
     },
     {
       "prNumber": 0,
-      "path": "code/frameworks/web-components-vite/src/types.ts",
-      "body": "f219f4d — fix(web-components): unwrap typed meta.component and make the manifest option a fallback",
-      "createdAt": "2026-09-23T09:51:47Z"
+      "path": "code/lib/cli-storybook/src/automigrate/helpers/react-dom-shim-file.ts",
+      "body": "4187905 — fix(cli): bound react dom shim workspace scan",
+      "createdAt": "2026-09-24T18:59:20Z"
     },
     {
       "prNumber": 0,
-      "path": "code/core/src/shared/open-service/sync-simulation.test.ts",
-      "body": "c5c0ff1 — Open-service: Cover snapshot bootstrap and repair in the harness and e2e",
-      "createdAt": "2026-09-22T18:12:02Z"
+      "path": "code/lib/cli-storybook/src/automigrate/helpers/react-dom-shim-workspace-patterns.ts",
+      "body": "95b5b23 — fix(cli): retain config package during incomplete scans",
+      "createdAt": "2026-09-24T17:30:20Z"
     },
     {
       "prNumber": 0,
-      "path": "code/core/src/common/js-package-manager/Yarn1Proxy.test.ts",
-      "body": "0841651 — Fix Yarn 1 next tag lookups",
-      "createdAt": "2026-09-22T16:07:06Z"
+      "path": "code/lib/cli-storybook/src/automigrate/helpers/react-dom-shim-workspace.ts",
+      "body": "e3dfe0c — fix(automigrate): name shim manifest on scan refusal",
+      "createdAt": "2026-09-24T16:54:41Z"
     },
     {
       "prNumber": 0,
-      "path": "code/frameworks/angular-vite/src/builders/build-storybook/index.test.ts",
-      "body": "bfa8d7b — fix(angular-vite): merge declared target options instead of schema defaults",
-      "createdAt": "2026-09-22T14:15:55Z"
+      "path": "code/lib/cli-storybook/src/automigrate/fixes/remove-react-dom-shim.test.ts",
+      "body": "fc21782 — test(cli): clarify shim traversal regression",
+      "createdAt": "2026-09-24T16:05:49Z"
     },
     {
       "prNumber": 0,
-      "path": "code/lib/docgen-harness/src/web-components/web-components-osa-baselines.test.ts",
-      "body": "b8b6230 — fix: correctly resolve from process.cwd",
-      "createdAt": "2026-09-22T12:51:55Z"
+      "path": "code/lib/cli-storybook/src/automigrate/helpers/react-dom-shim.ts",
+      "body": "501639b — fix(cli): traverse complete shim config ASTs",
+      "createdAt": "2026-09-24T16:03:03Z"
     },
     {
       "prNumber": 0,
-      "path": "code/frameworks/web-components-vite/src/types.ts",
-      "body": "59a82e7 — fix: resolve through process.cwd",
-      "createdAt": "2026-09-22T12:30:55Z"
+      "path": "yarn.lock",
+      "body": "e6394b5 — Fix lockfile after merging next",
+      "createdAt": "2026-09-24T15:54:23Z"
     },
     {
       "prNumber": 0,
-      "path": "code/core/src/preview-api/modules/preview-web/render/animation-utils.test.ts",
-      "body": "5c92ac0 — fix(preview-api): wait for finite WAAPI animations in waitForAnimations",
-      "createdAt": "2026-09-21T14:58:13Z"
+      "path": "MIGRATION.md",
+      "body": "46ee0d3 — Fix TypeScript 7 CI regressions",
+      "createdAt": "2026-09-24T15:33:22Z"
     },
     {
       "prNumber": 0,
-      "path": "code/frameworks/angular-vite/src/server/preset-options.ts",
-      "body": "27909cb — fix(angular-vite): correct preset-options browserTarget comments",
-      "createdAt": "2026-09-21T14:17:05Z"
+      "path": "code/lib/cli-storybook/src/automigrate/fixes/upgrade-storybook-related-dependencies.test.ts",
+      "body": "4997c79 — fix(cli): exclude shim from related upgrades",
+      "createdAt": "2026-09-24T15:22:37Z"
     }
   ],
   "topPaths": [
-    "code/renderers/svelte",
+    "code/lib/cli-storybook",
+    "MIGRATION.md",
+    "code/addons/vitest",
     "code/core/src",
-    "code/e2e-internal/open-service-sync.spec.ts",
-    "code/frameworks/web-components-vite",
-    "code/renderers/web-components"
+    "docs/_snippets/vitest-plugin-vitest-config.md"
   ],
-  "commentCount": 108,
+  "commentCount": 149,
   "firstSeen": "2026-02-23T12:53:10Z",
-  "lastSeen": "2026-09-24T12:22:13Z",
+  "lastSeen": "2026-09-25T12:42:42Z",
   "source": "commit-history"
 }

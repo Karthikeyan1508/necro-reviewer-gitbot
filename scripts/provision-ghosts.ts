@@ -37,10 +37,65 @@ async function checkGitBotHealth(baseUrl: string): Promise<boolean> {
   }
 }
 
+async function findExistingBotId(baseUrl: string, name: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${baseUrl}/bots`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { bots?: Array<{ id?: string; name?: string }> };
+    const match = data.bots?.find((b) => b.name === name);
+    return match?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function completeSetupIfNeeded(
+  baseUrl: string,
+  id: string,
+  setupStatus?: string,
+): Promise<boolean> {
+  if (setupStatus === 'complete') return true;
+  try {
+    const setupRes = await fetch(`${baseUrl}/bots/${encodeURIComponent(id)}/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'complete' }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return setupRes.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function registerBot(
   baseUrl: string,
   botSpec: ReturnType<typeof botSpecForPersona>,
-): Promise<{ success: boolean; id?: string; setupComplete?: boolean; error?: string }> {
+): Promise<{ success: boolean; id?: string; reused?: boolean; setupComplete?: boolean; error?: string }> {
+  // Idempotent: reuse the existing bot with the same name instead of POSTing a duplicate.
+  const existingId = await findExistingBotId(baseUrl, botSpec.name);
+  if (existingId) {
+    try {
+      const patchRes = await fetch(`${baseUrl}/bots/${encodeURIComponent(existingId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(botSpec),
+      });
+      if (!patchRes.ok) {
+        return { success: false, error: `HTTP ${patchRes.status}: ${await patchRes.text()}` };
+      }
+      const patched = (await patchRes.json()) as { bot?: { id?: string; setupStatus?: string } };
+      const id = patched.bot?.id ?? existingId;
+      const setupComplete = await completeSetupIfNeeded(baseUrl, id, patched.bot?.setupStatus);
+      return { success: true, id, reused: true, setupComplete };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  }
   try {
     const res = await fetch(`${baseUrl}/bots`, {
       method: 'POST',
@@ -55,20 +110,7 @@ async function registerBot(
     if (!id) return { success: true };
     // Ghosts that only review diffs must not be blocked by GitBot's machine-setup
     // gate, so mark their one-time setup complete right after registration.
-    let setupComplete = true;
-    if (data.bot?.setupStatus && data.bot.setupStatus !== 'complete') {
-      try {
-        const setupRes = await fetch(`${baseUrl}/bots/${encodeURIComponent(id)}/setup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'complete' }),
-          signal: AbortSignal.timeout(10_000),
-        });
-        setupComplete = setupRes.ok;
-      } catch {
-        setupComplete = false;
-      }
-    }
+    const setupComplete = await completeSetupIfNeeded(baseUrl, id, data.bot?.setupStatus);
     return { success: true, id, setupComplete };
   } catch (err) {
     return { success: false, error: (err as Error).message };
@@ -113,7 +155,8 @@ async function main(): Promise<void> {
     const result = await registerBot(baseUrl, spec);
     if (result.success) {
       const setup = result.setupComplete === false ? 'setup: pending' : 'setup: complete';
-      log(SCOPE, `✓ registered ${persona.name} (${persona.id}) -> bot ID: ${result.id ?? 'ok'} (${setup})`);
+      const verb = result.reused ? '✓ reused' : '✓ registered';
+      log(SCOPE, `${verb} ${persona.name} (${persona.id}) -> bot ID: ${result.id ?? 'ok'} (${setup})`);
     } else {
       log(SCOPE, `✖ could not register ${persona.name} (${result.error})`);
     }
