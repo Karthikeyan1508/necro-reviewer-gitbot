@@ -28,6 +28,7 @@
     "typecheck": "npm run typecheck -w @necroreview/core && npm run typecheck -w @necroreview/bridge && npm run typecheck -w @necroreview/ui"
   },
   "devDependencies": {
+    "puppeteer-core": "^25.12.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
