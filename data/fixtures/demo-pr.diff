@@ -1,0 +1,164 @@
+diff --git a/code/core/src/preview/preview-navigator.stories.tsx b/code/core/src/preview/preview-navigator.stories.tsx
+index fea503bcded5..83a27c078517 100644
+--- a/code/core/src/preview/preview-navigator.stories.tsx
++++ b/code/core/src/preview/preview-navigator.stories.tsx
+@@ -2,7 +2,7 @@ import type { StoryIndex } from 'storybook/internal/types';
+ 
+ import type { Meta, StoryObj } from '@storybook/react-vite';
+ 
+-import { fn } from 'storybook/test';
++import { expect, fn, within } from 'storybook/test';
+ 
+ import { setupPreviewNavigator, teardownPreviewNavigator } from './preview-navigator.ts';
+ 
+@@ -92,3 +92,48 @@ export const Default: Story = {
+     return teardownPreviewNavigator;
+   },
+ };
++
++const specialCharactersIndex: StoryIndex = {
++  entries: {
++    'select--bold': {
++      id: 'select--bold',
++      title: 'Forms/<Select> & "Co"',
++      name: '<b>Bold</b>',
++      type: 'story',
++      subtype: 'story',
++      importPath: './components/select/Select.stories.ts',
++    },
++    'button--primary': {
++      id: 'button--primary',
++      title: 'Button',
++      name: 'Primary',
++      type: 'story',
++      subtype: 'story',
++      importPath: './button/Button.stories.ts',
++    },
++  },
++  v: 4,
++};
++
++/**
++ * Story titles and names can contain HTML characters like `<`, `&` and `"`. Those must render
++ * as literal text in the navigator, not as markup.
++ */
++export const SpecialCharacters: Story = {
++  args: {
++    currentStoryId: 'select--bold',
++  },
++  beforeEach: ({ args }) => {
++    teardownPreviewNavigator();
++    setupPreviewNavigator(specialCharactersIndex, args.currentStoryId);
++
++    return teardownPreviewNavigator;
++  },
++  play: async () => {
++    const body = within(document.body);
++
++    expect(body.getByRole('link', { name: '<b>Bold</b>' })).toBeInTheDocument();
++    expect(body.getByRole('list', { name: '<Select> & "Co"' })).toBeInTheDocument();
++    expect(document.querySelector('#sb-navigator-container b')).toBeNull();
++  },
++};
+diff --git a/code/core/src/preview/preview-navigator.ts b/code/core/src/preview/preview-navigator.ts
+index c269e54dafea..4174745e2aa9 100644
+--- a/code/core/src/preview/preview-navigator.ts
++++ b/code/core/src/preview/preview-navigator.ts
+@@ -45,6 +45,49 @@ export async function maybeSetupPreviewNavigator() {
+   setupPreviewNavigator(index, currentEntryId);
+ }
+ 
++const createElementForNode = (node: BranchNode | LeafNode): HTMLElement => {
++  const li = document.createElement('li');
++
++  if ('entries' in node && 'title' in node) {
++    const branchNode = node as BranchNode;
++    li.className = 'sb-navigator-branch';
++
++    const details = document.createElement('details');
++    if (branchNode.isActive) details.open = true;
++
++    const summary = document.createElement('summary');
++    summary.className = 'sb-navigator-title';
++    summary.textContent = branchNode.title;
++
++    const ul = document.createElement('ul');
++    ul.className = 'sb-navigator-entries';
++    ul.setAttribute('aria-label', branchNode.title);
++
++    for (const child of Object.values(branchNode.entries)) {
++      ul.appendChild(createElementForNode(child));
++    }
++
++    details.appendChild(summary);
++    details.appendChild(ul);
++    li.appendChild(details);
++  } else {
++    const leafNode = node as LeafNode;
++    li.className = 'sb-navigator-story-item';
++
++    const a = document.createElement('a');
++    a.href = leafNode.href;
++    a.className = `sb-navigator-story-link${leafNode.isActive ? ' active' : ''}`;
++    if (leafNode.isActive) {
++      a.setAttribute('aria-current', 'location');
++    }
++    a.textContent = leafNode.name;
++
++    li.appendChild(a);
++  }
++
++  return li;
++};
++
+ export const setupPreviewNavigator = async (index: StoryIndex, currentEntryId: string) => {
+   const tree: BranchNode = { title: '', entries: {}, isActive: true };
+   for (const entry of Object.values(index.entries)) {
+@@ -77,42 +120,17 @@ export const setupPreviewNavigator = async (index: StoryIndex, currentEntryId: s
+     };
+   }
+ 
+-  const createHtmlForNode = (node: BranchNode | LeafNode): string => {
+-    if ('entries' in node && 'title' in node) {
+-      const branchNode = node as BranchNode;
+-      return `
+-      <li class="sb-navigator-branch">
+-        <details${branchNode.isActive ? ' open' : ''}>
+-          <summary class="sb-navigator-title">
+-            ${branchNode.title}
+-          </summary>
+-          <ul class="sb-navigator-entries" aria-label="${branchNode.title}">
+-            ${Object.values(branchNode.entries).map(createHtmlForNode).join('')}
+-          </ul>
+-        </details>
+-      </li>
+-      `;
+-    }
+-
+-    const leafNode = node as LeafNode;
+-    return `
+-      <li class="sb-navigator-story-item">
+-        <a href="${leafNode.href}" 
+-           class="sb-navigator-story-link${leafNode.isActive ? ' active' : ''}" 
+-           aria-current="${leafNode.isActive ? 'location' : 'false'}">${leafNode.name}</a>
+-      </li>
+-    `;
+-  };
+-
+-  const navItems = Object.values(tree.entries).map(createHtmlForNode).join('');
++  const navList = document.createElement('ul');
++  navList.className = 'sb-navigator-list';
++  for (const entry of Object.values(tree.entries)) {
++    navList.appendChild(createElementForNode(entry));
++  }
+ 
+   const nav = document.createElement('nav');
+   nav.id = 'sb-navigator-container';
+   nav.setAttribute('role', 'navigation');
+   nav.setAttribute('aria-label', 'Story navigation');
+-  nav.innerHTML = `
+-    <ul class="sb-navigator-list">${navItems}</ul>
+-  `;
++  nav.appendChild(navList);
+ 
+   document.body.insertBefore(nav, document.body.firstChild);

@@ -1,7 +1,7 @@
 {
   "repository": "storybookjs/storybook",
-  "generatedAt": "2026-09-24T19:02:53.662Z",
-  "ghostCount": 5,
+  "generatedAt": "2026-09-25T10:36:08.723Z",
+  "ghostCount": 6,
   "ghosts": [
     {
       "id": "ghost-ariperkkio",
@@ -23,7 +23,7 @@
       "name": "Ghost of Future You",
       "emoji": "🔮",
       "login": "future-you",
-      "blurb": "Not a reviewer — the version of you who already fixed this. Speaks from 37 fix and revert commits in storybookjs/storybook.",
+      "blurb": "Not a reviewer — the version of you who already fixed this. Speaks from 108 fix and revert commits in storybookjs/storybook.",
       "tone": "forensic, unsentimental, quotes receipts",
       "priorities": [
         "regressions this repository has already paid for",
@@ -32,15 +32,15 @@
         "cleanup that was never written"
       ],
       "synthetic": true,
-      "commentCount": 37
+      "commentCount": 108
     },
     {
       "id": "ghost-jreinhold",
       "name": "Ghost of JReinhold",
       "emoji": "🧿",
       "login": "JReinhold",
-      "blurb": "Resurrected from 36 review comments across 7 PRs. Last seen 2026-09-24. Watches story coverage first.",
-      "tone": "terse and factual",
+      "blurb": "Resurrected from 187 review comments across 47 PRs. Last seen 2026-09-25. Watches story coverage first.",
+      "tone": "writes it out in full",
       "priorities": [
         "story coverage",
         "test coverage",
@@ -48,38 +48,55 @@
         "documentation accuracy"
       ],
       "synthetic": false,
-      "commentCount": 36
+      "commentCount": 187
     },
     {
       "id": "ghost-kasperpeulen",
       "name": "Ghost of kasperpeulen",
       "emoji": "🌫️",
       "login": "kasperpeulen",
-      "blurb": "Resurrected from 27 review comments across 8 PRs. Last seen 2026-09-24. Watches test coverage first.",
-      "tone": "separates nits from blockers, writes it out in full, answers with snippets",
+      "blurb": "Resurrected from 254 review comments across 35 PRs. Last seen 2026-09-24. Watches test coverage first.",
+      "tone": "writes it out in full, answers with snippets",
       "priorities": [
         "test coverage",
         "documentation accuracy",
         "error handling",
-        "security"
+        "story coverage"
       ],
       "synthetic": false,
-      "commentCount": 27
+      "commentCount": 254
+    },
+    {
+      "id": "ghost-ndelangen",
+      "name": "Ghost of ndelangen",
+      "emoji": "👻",
+      "login": "ndelangen",
+      "blurb": "Resurrected from 114 review comments across 31 PRs. Last seen 2026-09-25. Watches test coverage first.",
+      "tone": "terse and factual",
+      "priorities": [
+        "test coverage",
+        "story coverage",
+        "documentation accuracy",
+        "error handling"
+      ],
+      "synthetic": false,
+      "commentCount": 114
     },
     {
       "id": "ghost-valentinpalkovic",
       "name": "Ghost of valentinpalkovic",
       "emoji": "⚰️",
       "login": "valentinpalkovic",
-      "blurb": "Resurrected from 17 review comments across 3 PRs. Last seen 2026-09-24. Watches test coverage first.",
-      "tone": "terse and factual",
+      "blurb": "Resurrected from 446 review comments across 103 PRs. Last seen 2026-09-24. Watches story coverage first.",
+      "tone": "answers with snippets",
       "priorities": [
-        "test coverage",
+        "story coverage",
         "documentation accuracy",
-        "story coverage"
+        "test coverage",
+        "type safety"
       ],
       "synthetic": false,
-      "commentCount": 17
+      "commentCount": 446
     }
   ]
 }
