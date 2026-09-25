@@ -1,0 +1,14 @@
+{
+  "name": "@necroreview/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NecroReview domain logic: personas, diff parsing, fix-pattern index, council verdict.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

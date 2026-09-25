@@ -1,0 +1,34 @@
+{
+  "name": "necroreview",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NecroReview — resurrect a repository's best reviewers as Ghost Bots that review new PRs in their own voice.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/bridge",
+    "packages/ui"
+  ],
+  "scripts": {
+    "data": "node --import tsx scripts/fetch-github-data.ts",
+    "personas": "node --import tsx scripts/extract-ghost-personas.ts",
+    "index": "node --import tsx scripts/build-fix-index.ts",
+    "bootstrap": "npm run data && npm run personas && npm run index",
+    "bots": "node --import tsx scripts/provision-ghosts.ts",
+    "library": "node --import tsx scripts/publish-library.ts",
+    "start": "npm run start -w @necroreview/bridge",
+    "dev:bridge": "npm run dev -w @necroreview/bridge",
+    "dev:ui": "npm run dev -w @necroreview/ui",
+    "build:ui": "npm run build -w @necroreview/ui",
+    "demo": "npm run build:ui && npm run start",
+    "test": "npm run test -w @necroreview/core && npm run test -w @necroreview/bridge",
+    "typecheck": "npm run typecheck -w @necroreview/core && npm run typecheck -w @necroreview/bridge && npm run typecheck -w @necroreview/ui"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@necroreview/bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NecroReview bridge: drives ghost bots through GitBot HQ and streams the review to the control room.",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "dev": "node --import tsx --watch src/main.ts",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@necroreview/core": "*",
+    "@types/cors": "^2.8.19",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

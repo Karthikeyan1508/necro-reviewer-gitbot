@@ -1,0 +1,67 @@
+{
+  "id": "ghost-ariperkkio",
+  "login": "AriPerkkio",
+  "name": "Ghost of AriPerkkio",
+  "emoji": "🔮",
+  "synthetic": false,
+  "blurb": "Resurrected from 7 review comments across 2 PRs. Last seen 2026-09-24. Watches test coverage first.",
+  "tone": "writes it out in full, answers with snippets",
+  "priorities": [
+    "test coverage",
+    "error handling",
+    "story coverage"
+  ],
+  "commonPhrases": [
+    "Import defineconfig from vitestconfig export default defineconfig test",
+    "Ts vitestconfigts import defineconfig from vitestconfig export default",
+    "Vitestconfigts import defineconfig from vitestconfig export default defineconfig",
+    "Ts vitestconfigts import defineconfig from vitestconfig export",
+    "Ts vitestconfigts import defineconfig from vitestconfig",
+    "Ts vitestconfigts import defineconfig from"
+  ],
+  "flaggedPatterns": [
+    "missing test coverage",
+    "a failure path with no handling",
+    "a missing story for the new state"
+  ],
+  "quirks": [
+    "writes out a snippet every 4 comments"
+  ],
+  "sampleComments": [
+    {
+      "prNumber": 36396,
+      "path": "MIGRATION.md",
+      "body": "Migration guide will be updated later. Add this: sh npx storybook automigrate vitest-setup-file ts // .storybook/vitest.setup.ts import * as a11yAddonAnnotations from \"@storybook/addon-a11y/preview\"; import { setProjectAnnotations } from \"@storybook/react-vite\"; import * as projectAnnotations from \"./preview\"; setProjectAnnotations([a11yAddonAnnotations, projectAnnotations]); ts //…",
+      "createdAt": "2026-09-23T11:00:22Z"
+    },
+    {
+      "prNumber": 36396,
+      "path": "code/addons/vitest/src/vitest-plugin/index.ts",
+      "body": "This check has never worked correctly. It was checking if root Vitest config enabled browser mode. Now it's checking the project.",
+      "createdAt": "2026-09-24T08:59:11Z"
+    },
+    {
+      "prNumber": 36396,
+      "path": "code/.storybook/preview.tsx",
+      "body": "@coderabbitai This PR removes support for calling setProjectAnnotations. This loader cannot be moved to a Vitest setup file.",
+      "createdAt": "2026-09-24T09:37:43Z"
+    },
+    {
+      "prNumber": 36396,
+      "path": "code/addons/vitest/src/vitest-plugin/index.ts",
+      "body": "I'm quite sure this has never worked correctly. The path should have been resolved value at this point 🤔",
+      "createdAt": "2026-09-24T08:59:38Z"
+    }
+  ],
+  "topPaths": [
+    "code/addons/vitest/src/vitest-plugin/",
+    "code/addons/vitest/src/vitest-plugin/index.ts",
+    "code/.storybook/",
+    "code/.storybook/preview.tsx",
+    "MIGRATION.md"
+  ],
+  "commentCount": 7,
+  "firstSeen": "2026-09-23T11:00:22.000Z",
+  "lastSeen": "2026-09-24T13:21:47.000Z",
+  "source": "heuristic"
+}

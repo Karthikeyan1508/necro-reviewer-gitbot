@@ -1,0 +1,85 @@
+{
+  "repository": "storybookjs/storybook",
+  "generatedAt": "2026-09-24T19:02:53.662Z",
+  "ghostCount": 5,
+  "ghosts": [
+    {
+      "id": "ghost-ariperkkio",
+      "name": "Ghost of AriPerkkio",
+      "emoji": "🔮",
+      "login": "AriPerkkio",
+      "blurb": "Resurrected from 7 review comments across 2 PRs. Last seen 2026-09-24. Watches test coverage first.",
+      "tone": "writes it out in full, answers with snippets",
+      "priorities": [
+        "test coverage",
+        "error handling",
+        "story coverage"
+      ],
+      "synthetic": false,
+      "commentCount": 7
+    },
+    {
+      "id": "ghost-future-you",
+      "name": "Ghost of Future You",
+      "emoji": "🔮",
+      "login": "future-you",
+      "blurb": "Not a reviewer — the version of you who already fixed this. Speaks from 37 fix and revert commits in storybookjs/storybook.",
+      "tone": "forensic, unsentimental, quotes receipts",
+      "priorities": [
+        "regressions this repository has already paid for",
+        "error handling on every network call",
+        "unbounded loops and effect cycles",
+        "cleanup that was never written"
+      ],
+      "synthetic": true,
+      "commentCount": 37
+    },
+    {
+      "id": "ghost-jreinhold",
+      "name": "Ghost of JReinhold",
+      "emoji": "🧿",
+      "login": "JReinhold",
+      "blurb": "Resurrected from 36 review comments across 7 PRs. Last seen 2026-09-24. Watches story coverage first.",
+      "tone": "terse and factual",
+      "priorities": [
+        "story coverage",
+        "test coverage",
+        "error handling",
+        "documentation accuracy"
+      ],
+      "synthetic": false,
+      "commentCount": 36
+    },
+    {
+      "id": "ghost-kasperpeulen",
+      "name": "Ghost of kasperpeulen",
+      "emoji": "🌫️",
+      "login": "kasperpeulen",
+      "blurb": "Resurrected from 27 review comments across 8 PRs. Last seen 2026-09-24. Watches test coverage first.",
+      "tone": "separates nits from blockers, writes it out in full, answers with snippets",
+      "priorities": [
+        "test coverage",
+        "documentation accuracy",
+        "error handling",
+        "security"
+      ],
+      "synthetic": false,
+      "commentCount": 27
+    },
+    {
+      "id": "ghost-valentinpalkovic",
+      "name": "Ghost of valentinpalkovic",
+      "emoji": "⚰️",
+      "login": "valentinpalkovic",
+      "blurb": "Resurrected from 17 review comments across 3 PRs. Last seen 2026-09-24. Watches test coverage first.",
+      "tone": "terse and factual",
+      "priorities": [
+        "test coverage",
+        "documentation accuracy",
+        "story coverage"
+      ],
+      "synthetic": false,
+      "commentCount": 17
+    }
+  ]
+}

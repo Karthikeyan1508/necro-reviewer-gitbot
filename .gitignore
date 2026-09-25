@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+packages/ui/dist/
+*.tsbuildinfo
+
+# fetched + derived data (recreate with: npm run bootstrap)
+data/raw/
+data/index/
+data/hall-of-fame.json
+storybook/
+
+# scratch
+.tmp-inspect/
+*.log
+.DS_Store
+
+# secrets
+.env
+.env.local
