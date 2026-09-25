@@ -2,8 +2,9 @@
  * Step 4 of the pipeline: provision ghost personas as bots in GitBot HQ.
  *
  * If GitBot HQ is running (at GITBOT_URL or http://localhost:3000), this script
- * calls `POST /api/bots` to register each ghost bot with its instructions,
- * allowed tools, and prompt settings.
+ * calls `POST /bots` to register each ghost bot with its instructions, allowed
+ * tools, and prompt settings, and marks review-only bots setup-complete so
+ * GitBot never blocks their review threads on a machine setup run.
  *
  * Usage:
  *   npm run bots
@@ -25,12 +26,12 @@ const SCOPE = 'provision';
 
 async function checkGitBotHealth(baseUrl: string): Promise<boolean> {
   try {
-    const res = await fetch(`${baseUrl}/api/bots`, {
+    const res = await fetch(`${baseUrl}/bots`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(3000),
     });
-    return res.ok || res.status === 200 || res.status === 404;
+    return res.ok;
   } catch {
     return false;
   }
@@ -39,9 +40,9 @@ async function checkGitBotHealth(baseUrl: string): Promise<boolean> {
 async function registerBot(
   baseUrl: string,
   botSpec: ReturnType<typeof botSpecForPersona>,
-): Promise<{ success: boolean; id?: string; error?: string }> {
+): Promise<{ success: boolean; id?: string; setupComplete?: boolean; error?: string }> {
   try {
-    const res = await fetch(`${baseUrl}/api/bots`, {
+    const res = await fetch(`${baseUrl}/bots`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(botSpec),
@@ -49,8 +50,26 @@ async function registerBot(
     if (!res.ok) {
       return { success: false, error: `HTTP ${res.status}: ${await res.text()}` };
     }
-    const data = (await res.json()) as { id?: string };
-    return { success: true, id: data.id };
+    const data = (await res.json()) as { bot?: { id?: string; setupStatus?: string }; id?: string };
+    const id = data.bot?.id ?? data.id;
+    if (!id) return { success: true };
+    // Ghosts that only review diffs must not be blocked by GitBot's machine-setup
+    // gate, so mark their one-time setup complete right after registration.
+    let setupComplete = true;
+    if (data.bot?.setupStatus && data.bot.setupStatus !== 'complete') {
+      try {
+        const setupRes = await fetch(`${baseUrl}/bots/${encodeURIComponent(id)}/setup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'complete' }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        setupComplete = setupRes.ok;
+      } catch {
+        setupComplete = false;
+      }
+    }
+    return { success: true, id, setupComplete };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }
@@ -93,7 +112,8 @@ async function main(): Promise<void> {
 
     const result = await registerBot(baseUrl, spec);
     if (result.success) {
-      log(SCOPE, `✓ registered ${persona.name} (${persona.id}) -> bot ID: ${result.id ?? 'ok'}`);
+      const setup = result.setupComplete === false ? 'setup: pending' : 'setup: complete';
+      log(SCOPE, `✓ registered ${persona.name} (${persona.id}) -> bot ID: ${result.id ?? 'ok'} (${setup})`);
     } else {
       log(SCOPE, `✖ could not register ${persona.name} (${result.error})`);
     }

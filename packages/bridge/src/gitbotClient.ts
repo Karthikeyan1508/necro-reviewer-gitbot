@@ -1,13 +1,17 @@
-﻿import {
+import {
   type Finding,
   type GhostPersona,
   type PullRequestMeta,
   type ReviewEvent,
+  type GitBotAgent,
+  agentHarness,
   avatarUrl,
   botSpecForPersona,
   citationHistory,
   extractFindingJson,
+  loadEnv,
   proseWithoutJson,
+  repoPath,
   retrieveCitations,
   reviewPrompt,
   seancePrompt,
@@ -18,12 +22,35 @@ export interface GitBotClientOptions {
   timeoutMs?: number;
 }
 
-export interface SessionCreateResponse {
+interface BotRow {
   id: string;
-  botId?: string;
-  status?: string;
+  name: string;
+  setupStatus?: string;
 }
 
+interface TurnResult {
+  sessionId: string;
+  threadId: string | null;
+  transcript: string;
+}
+
+const HTTP_TIMEOUT_MS = 20_000;
+const SSE_TIMEOUT_MS = 5 * 60 * 1000;
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+/**
+ * Bridge client for the installed GitBot HQ service.
+ *
+ * Transport contract (installed GitBot version):
+ * - GET  /bots                    -> { bots }
+ * - POST /bots                    -> { bot, setupThread }
+ * - POST /bots/:id/setup          -> { bot }       (body { action: "complete" })
+ * - POST /threads                 -> { thread }    (body { botId, repoPath, title })
+ * - POST /chat                    -> { sessionId } (body { threadId, prompt, ... })
+ * - GET  /events?sessionId=...    -> SSE, ends on done / error / aborted
+ * - GET  /threads/:id/messages    -> { messages }  (transcript fallback)
+ * - POST /sessions/:id/permission -> { ok: true }  (body { toolUseID, approved })
+ */
 export class GitBotClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
@@ -35,25 +62,29 @@ export class GitBotClient {
 
   async isHealthy(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/bots`, {
+      const res = await fetch(`${this.baseUrl}/bots`, {
         signal: AbortSignal.timeout(this.timeoutMs),
       });
-      return res.ok || res.status === 200 || res.status === 404;
+      return res.ok;
     } catch {
       return false;
     }
   }
 
+  /** Registers a bot and marks review-only ghosts setup-complete so review threads are not blocked. */
   async registerBot(spec: ReturnType<typeof botSpecForPersona>): Promise<string | null> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/bots`, {
+      const res = await fetch(`${this.baseUrl}/bots`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify(spec),
+        signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
       });
       if (!res.ok) return null;
-      const data = (await res.json()) as { id?: string };
-      return data.id ?? null;
+      const data = (await res.json()) as { bot?: { id?: string }; id?: string };
+      const botId = data.bot?.id ?? data.id;
+      if (botId) await this.completeSetup(botId);
+      return botId ?? null;
     } catch {
       return null;
     }
@@ -67,25 +98,15 @@ export class GitBotClient {
   }): Promise<Finding | null> {
     const { persona, pr, diffText, onEvent } = params;
     const prompt = reviewPrompt({ persona, pr, diff: diffText });
-
-    try {
-      const res = await fetch(`${this.baseUrl}/api/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          botName: persona.name,
-          login: persona.login,
-          prompt,
-          permissionMode: 'plan',
-        }),
-      });
-
-      if (!res.ok) return null;
-      const session = (await res.json()) as SessionCreateResponse;
-      return await this.listenToSession(session.id, persona, onEvent);
-    } catch {
-      return null;
-    }
+    const turn = await this.runTurn(persona, prompt, onEvent);
+    if (!turn) return null;
+    onEvent({
+      type: 'ghost:thinking',
+      ghostId: persona.id,
+      ghostName: persona.name,
+      status: turn.transcript.trim() ? 'Review complete.' : 'The spirit returned nothing.',
+    });
+    return this.parseFindingFromText(persona, turn.sessionId, turn.transcript);
   }
 
   async runSeanceSession(params: {
@@ -96,38 +117,23 @@ export class GitBotClient {
     const citations = retrieveCitations(persona, question);
     const history = citationHistory(citations);
     const prompt = seancePrompt({ persona, question, history });
-
-    try {
-      const res = await fetch(`${this.baseUrl}/api/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          botName: persona.name,
-          login: persona.login,
-          prompt,
-          permissionMode: 'plan',
-        }),
-      });
-
-      if (!res.ok) return null;
-      const session = (await res.json()) as SessionCreateResponse;
-      const transcript = await this.pollSessionResult(session.id);
-      return {
-        answer: transcript ? proseWithoutJson(transcript) : 'The spirits could not respond.',
-        citations,
-        sessionId: session.id,
-      };
-    } catch {
-      return null;
-    }
+    const turn = await this.runTurn(persona, prompt);
+    if (!turn) return null;
+    return {
+      answer: turn.transcript.trim() ? proseWithoutJson(turn.transcript) : 'The spirits could not be reached this time.',
+      citations,
+      sessionId: turn.sessionId,
+    };
   }
 
+  /** Answers a GitBot permission prompt on behalf of the human reviewer. */
   async resolvePermission(sessionId: string, toolUseId: string, decision: 'allow' | 'deny'): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/sessions/${sessionId}/permissions`, {
+      const res = await fetch(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/permission`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolUseId, decision }),
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ toolUseID: toolUseId, approved: decision === 'allow' }),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
       return res.ok;
     } catch {
@@ -135,61 +141,208 @@ export class GitBotClient {
     }
   }
 
-  private async listenToSession(
-    sessionId: string,
+  private async runTurn(
     persona: GhostPersona,
-    onEvent: (event: ReviewEvent) => void,
-  ): Promise<Finding | null> {
+    prompt: string,
+    onEvent?: (event: ReviewEvent) => void,
+  ): Promise<TurnResult | null> {
+    const botId = await this.ensureBot(persona);
+    if (!botId) return null;
+
+    const threadId = await this.createReviewThread(botId, persona);
+    if (!threadId) return null;
+
+    const sessionId = await this.startChat(threadId, prompt);
+    if (!sessionId) return null;
+
+    onEvent?.({
+      type: 'ghost:thinking',
+      ghostId: persona.id,
+      ghostName: persona.name,
+      status: 'Reviewing diff lines...',
+    });
+
+    let transcript = await this.streamSession(sessionId, persona, onEvent);
+    if (!transcript.trim()) transcript = await this.fetchThreadTranscript(threadId);
+    if (!transcript.trim()) return null;
+
+    return { sessionId, threadId, transcript };
+  }
+
+  private async ensureBot(persona: GhostPersona): Promise<string | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/sessions/${sessionId}/events`, {
-        headers: { Accept: 'text/event-stream' },
+      const res = await fetch(`${this.baseUrl}/bots`, {
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
-
-      if (!response.ok || !response.body) {
-        const text = await this.pollSessionResult(sessionId);
-        return this.parseFindingFromText(persona, sessionId, text);
+      if (res.ok) {
+        const data = (await res.json()) as { bots?: BotRow[] };
+        const existing = (data.bots ?? []).find((bot) => bot.name === persona.name);
+        if (existing) {
+          if (existing.setupStatus && existing.setupStatus !== 'complete') {
+            await this.completeSetup(existing.id);
+          }
+          return existing.id;
+        }
       }
+    } catch {
+      // Registration below is the fallback path.
+    }
+    return this.registerBot(this.specFor(persona));
+  }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedProse = '';
+  private specFor(persona: GhostPersona): ReturnType<typeof botSpecForPersona> {
+    loadEnv();
+    return botSpecForPersona(persona, {
+      agent: agentHarness() as GitBotAgent,
+      repoPath: repoPath() || undefined,
+      permissionMode: 'plan',
+    });
+  }
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        accumulatedProse += chunk;
+  private async completeSetup(botId: string): Promise<void> {
+    try {
+      await fetch(`${this.baseUrl}/bots/${encodeURIComponent(botId)}/setup`, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ action: 'complete' }),
+        signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+      });
+    } catch {
+      // Best-effort: GitBot may already consider the bot ready.
+    }
+  }
 
-        onEvent({
-          type: 'ghost:thinking',
-          ghostId: persona.id,
-          ghostName: persona.name,
-          status: 'Reviewing diff lines...',
-        });
-      }
-
-      return this.parseFindingFromText(persona, sessionId, accumulatedProse);
+  private async createReviewThread(botId: string, persona: GhostPersona): Promise<string | null> {
+    loadEnv();
+    const payload: Record<string, unknown> = { botId, title: `Review for ${persona.name}` };
+    const repo = repoPath();
+    if (repo) payload.repoPath = repo;
+    try {
+      const res = await fetch(`${this.baseUrl}/threads`, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { thread?: { id?: string } };
+      return data.thread?.id ?? null;
     } catch {
       return null;
     }
   }
 
-  private async pollSessionResult(sessionId: string): Promise<string | null> {
-    const maxAttempts = 30;
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise((r) => setTimeout(r, 1000));
-      try {
-        const res = await fetch(`${this.baseUrl}/api/sessions/${sessionId}`);
-        if (!res.ok) continue;
-        const data = (await res.json()) as { status?: string; output?: string; reply?: string; result?: string };
-        if (data.status === 'completed' || data.status === 'done' || data.reply || data.output) {
-          return data.reply ?? data.output ?? data.result ?? null;
-        }
-      } catch {
-        // Retry
-      }
+  private async startChat(threadId: string, prompt: string): Promise<string | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/chat`, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ threadId, prompt, permissionMode: 'plan' }),
+        signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { sessionId?: string };
+      return data.sessionId ?? null;
+    } catch {
+      return null;
     }
-    return null;
+  }
+
+  /** Consumes the SSE session stream; returns the assistant text accumulated. */
+  private async streamSession(
+    sessionId: string,
+    persona: GhostPersona | null,
+    onEvent?: (event: ReviewEvent) => void,
+  ): Promise<string> {
+    const parts: string[] = [];
+    try {
+      const response = await fetch(`${this.baseUrl}/events?sessionId=${encodeURIComponent(sessionId)}`, {
+        headers: { Accept: 'text/event-stream' },
+        signal: AbortSignal.timeout(SSE_TIMEOUT_MS),
+      });
+      if (!response.ok || !response.body) return parts.join('');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let sepIndex = buffer.indexOf('\n\n');
+        while (sepIndex !== -1) {
+          const frame = buffer.slice(0, sepIndex);
+          buffer = buffer.slice(sepIndex + 2);
+          const text = this.frameText(frame);
+          if (text) {
+            parts.push(text);
+            onEvent?.({
+              type: 'ghost:thinking',
+              ghostId: persona?.id ?? 'ghost',
+              ghostName: persona?.name ?? 'Ghost',
+              status: 'Reviewing diff lines...',
+            });
+          }
+          sepIndex = buffer.indexOf('\n\n');
+        }
+      }
+    } catch {
+      // Disconnects are normal once GitBot ends the stream; the caller falls
+      // back to the thread transcript when nothing accumulated.
+    }
+    return parts.join('\n');
+  }
+
+  /** Pulls assistant text out of one SSE frame (`id:` / `event:` / `data:` lines). */
+  private frameText(frame: string): string {
+    let eventType = '';
+    let raw = '';
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('event: ')) eventType = line.slice(7).trim();
+      else if (line.startsWith('data: ')) raw = line.slice(6).trim();
+    }
+    if (!raw) return '';
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return '';
+    }
+    if (!parsed || typeof parsed !== 'object') return '';
+    const obj = parsed as Record<string, unknown>;
+    const type = typeof obj.type === 'string' ? (obj.type as string) : eventType;
+    if (type !== 'assistant') return '';
+    const content = obj.content ?? obj.text ?? obj.message;
+    return typeof content === 'string' ? content : '';
+  }
+
+  /** Transcript fallback: reads the thread's saved conversation from GitBot. */
+  private async fetchThreadTranscript(threadId: string): Promise<string> {
+    try {
+      const res = await fetch(`${this.baseUrl}/threads/${encodeURIComponent(threadId)}/messages`, {
+        signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+      });
+      if (!res.ok) return '';
+      const data = (await res.json()) as { messages?: unknown[] };
+      if (!Array.isArray(data.messages)) return '';
+      const parts: string[] = [];
+      for (const message of data.messages) {
+        if (typeof message === 'string') {
+          if (message.trim()) parts.push(message.trim());
+          continue;
+        }
+        if (!message || typeof message !== 'object') continue;
+        const obj = message as Record<string, unknown>;
+        if (obj.role !== undefined && obj.role !== 'assistant') continue;
+        const content = obj.content ?? obj.text ?? obj.message;
+        if (typeof content === 'string' && content.trim()) parts.push(content.trim());
+      }
+      return parts.join('\n');
+    } catch {
+      return '';
+    }
   }
 
   private parseFindingFromText(persona: GhostPersona, sessionId: string, text: string | null): Finding | null {
@@ -226,4 +379,3 @@ function isSeverity(value: unknown): value is Finding['severity'] {
 function isVoteKind(value: unknown): value is Finding['vote'] {
   return value === 'approve' || value === 'request_changes' || value === 'block';
 }
-
